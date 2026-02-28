@@ -54,6 +54,7 @@ async def create_call_log(
             tools_used=data.get("tools_used"),
             qualification_data=data.get("qualification_data"),
             transcript_summary=data.get("transcript_summary"),
+            action_taken=data.get("action_taken"),
         )
         db.add(call_log)
         await db.commit()
@@ -238,6 +239,7 @@ async def get_call_logs(
                 "transcript_summary": c.transcript_summary,
                 "tools_used": c.tools_used,
                 "qualification_data": c.qualification_data,
+                "full_transcript": c.action_taken,
             }
             for c in calls
         ],

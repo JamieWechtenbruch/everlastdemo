@@ -26,6 +26,7 @@ type CallData = {
   transcript_summary: string | null;
   tools_used: string[];
   qualification_data: Record<string, string> | null;
+  full_transcript: { role: string; text: string }[] | null;
 };
 
 function formatDuration(seconds: number): string {
@@ -272,46 +273,65 @@ export default function CallsPage() {
                     </div>
                   </div>
 
-                  {/* Transcript toggle — show summary sentences as conversation */}
-                  {call.transcript_summary && (
+                  {/* Transcript toggle — WhatsApp-style chat */}
+                  {(call.full_transcript || call.transcript_summary) && (
                     <>
                       <button
                         onClick={() => toggleTranscript(call.id)}
                         className="w-full flex items-center justify-center gap-2 py-3 border-t border-stone-100 bg-stone-50/50 hover:bg-orange-50/50 text-stone-600 hover:text-orange-600 text-sm font-bold transition-colors"
                       >
                         <MessageSquare className="w-4 h-4" />
-                        {expandedCallId === call.id ? "Details schließen" : "Details anzeigen"}
+                        {expandedCallId === call.id ? "Transkript schließen" : "Transkript anzeigen"}
                         {expandedCallId === call.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
 
                       {expandedCallId === call.id && (
-                        <div className="p-6 md:p-8 bg-stone-50 border-t border-stone-100 animate-in fade-in slide-in-from-top-4 duration-300">
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                            <div className="bg-white border border-stone-200/50 rounded-xl p-3">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Phase</span>
-                              <p className="text-sm font-semibold text-stone-800 mt-0.5 capitalize">{call.conversation_phase}</p>
-                            </div>
-                            <div className="bg-white border border-stone-200/50 rounded-xl p-3">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Dauer</span>
-                              <p className="text-sm font-semibold text-stone-800 mt-0.5">{formatDuration(call.duration_seconds || 0)}</p>
-                            </div>
-                            <div className="bg-white border border-stone-200/50 rounded-xl p-3">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Zeitpunkt</span>
-                              <p className="text-sm font-semibold text-stone-800 mt-0.5">
-                                {new Date(call.call_datetime).toLocaleString("de-DE", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </p>
+                        <div className="p-6 md:p-8 bg-[#efeae2] border-t border-stone-200 max-h-[500px] overflow-y-auto">
+                          {/* Info bar */}
+                          <div className="flex items-center justify-center mb-4">
+                            <div className="bg-white/80 backdrop-blur-sm text-stone-500 text-xs font-medium px-3 py-1 rounded-lg shadow-sm">
+                              {new Date(call.call_datetime).toLocaleString("de-DE", {
+                                day: "2-digit", month: "2-digit", year: "numeric",
+                                hour: "2-digit", minute: "2-digit",
+                              })} &middot; {formatDuration(call.duration_seconds || 0)}
                             </div>
                           </div>
-                          <div className="bg-white border border-stone-200/50 rounded-xl p-4">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Zusammenfassung</span>
-                            <p className="text-sm text-stone-700 leading-relaxed font-medium mt-1">{call.transcript_summary}</p>
-                          </div>
+
+                          {call.full_transcript && call.full_transcript.length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                              {call.full_transcript.map((msg, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`flex ${msg.role === "agent" ? "justify-start" : "justify-end"}`}
+                                >
+                                  <div
+                                    className={`max-w-[80%] px-3.5 py-2.5 text-sm leading-relaxed shadow-sm ${
+                                      msg.role === "agent"
+                                        ? "bg-white text-stone-800 rounded-2xl rounded-tl-sm border border-stone-200/30"
+                                        : "bg-[#d9fdd3] text-stone-800 rounded-2xl rounded-tr-sm"
+                                    }`}
+                                  >
+                                    <span className={`text-[10px] font-bold block mb-0.5 ${
+                                      msg.role === "agent" ? "text-orange-500" : "text-emerald-600"
+                                    }`}>
+                                      {msg.role === "agent" ? "Anna" : "Anrufer"}
+                                    </span>
+                                    {msg.text}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            /* Fallback: show summary as single message */
+                            <div className="flex flex-col gap-2">
+                              <div className="flex justify-end">
+                                <div className="max-w-[80%] px-3.5 py-2.5 text-sm leading-relaxed shadow-sm bg-[#d9fdd3] text-stone-800 rounded-2xl rounded-tr-sm">
+                                  <span className="text-[10px] font-bold block mb-0.5 text-emerald-600">Anrufer</span>
+                                  {call.transcript_summary}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </>
