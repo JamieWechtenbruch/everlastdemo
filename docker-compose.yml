@@ -105,7 +105,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/docusync-api}
     container_name: docusync-frontend
     depends_on:
       backend:
@@ -123,3 +123,4 @@ volumes:
 networks:
   default:
     name: docusync-network
+    driver: bridge
