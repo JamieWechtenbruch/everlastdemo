@@ -1,0 +1,19 @@
+# FastAPI Backend
+fastapi>=0.116.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+
+# Database
+sqlalchemy[asyncio]>=2.0.30
+asyncpg>=0.29.0
+
+# Cache
+redis>=5.0.4
+
+# LiveKit Token Generation
+livekit-api>=0.7.0
+
+# HTTP Client
+aiohttp>=3.9.0
