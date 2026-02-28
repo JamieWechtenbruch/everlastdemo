@@ -1,5 +1,5 @@
 """
-DocuSync.io Voice Agent — B2B Inbound Sales Agent "Alex"
+DocuSync.io Voice Agent — B2B Inbound Sales Agent "Anna"
 Qualifies leads via BANT methodology and books demo appointments.
 """
 import asyncio
@@ -278,7 +278,7 @@ async def book_demo_meeting(
             "description": (
                 f"Demo-Gespräch mit {customer_name}.\n"
                 f"E-Mail: {customer_email}\n"
-                f"Gebucht über den DocuSync.io KI-Vertriebsassistenten Alex."
+                f"Gebucht über die DocuSync.io KI-Vertriebsassistentin Anna."
             ),
             "start": {
                 "dateTime": start_dt.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -372,12 +372,12 @@ async def entrypoint(ctx: JobContext):
     current_weekday_de = weekday_map.get(current_weekday, current_weekday)
 
     # ========================================================================
-    # SYSTEM PROMPT — DocuSync.io B2B Sales Agent "Alex"
+    # SYSTEM PROMPT — DocuSync.io B2B Sales Agent "Anna"
     # ========================================================================
 
     agent = Agent(
         instructions=(
-            "Du bist Alex, der KI-Vertriebsassistent von DocuSync.io.\n"
+            "Du bist Anna, die KI-Vertriebsassistentin von DocuSync.io.\n"
             "Du führst eingehende Gespräche mit B2B-Entscheidern, die eine Case Study "
             "über Vertragsanalyse und Kostenoptimierung gelesen haben.\n\n"
 
@@ -449,7 +449,7 @@ async def entrypoint(ctx: JobContext):
     # --- TTS Provider ---
     natural_voice = elevenlabs.TTS(
         model="eleven_turbo_v2_5",
-        voice_id="cgSgspJ2msm6clMCkdW9",
+        voice_id="EXAVITQu4vr4xnSDxMaL",  # Sarah — Female, warm, professional
         language="de",
     )
 
@@ -725,21 +725,22 @@ async def entrypoint(ctx: JobContext):
     await session.generate_reply(
         instructions=(
             "Begrüße den Anrufer warm. "
-            "Sage so etwas wie: 'Hallo und willkommen bei DocuSync.io! Ich bin Alex, "
-            "Ihr KI-Vertriebsassistent. "
+            "Sage so etwas wie: 'Hallo und willkommen bei DocuSync.io! Ich bin Anna, "
+            "Ihre KI-Vertriebsassistentin. "
             "Sie haben unsere Case Study gelesen... was hat Sie denn besonders interessiert?' "
             "Das sind 3 kurze Sätze: Begrüßung, wer du bist, eine offene Frage. "
             "Dann STOPP und warte auf die Antwort."
         )
     )
 
-    logger.info("Voice Agent 'Alex' for DocuSync.io is ready.")
+    logger.info("Voice Agent 'Anna' for DocuSync.io is ready.")
 
 
 if __name__ == "__main__":
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=entrypoint,
+            agent_name="docusync-agent",
             num_idle_processes=2,
         ),
     )

@@ -160,7 +160,7 @@ export function VoiceWidget() {
         </div>
 
         <div>
-          <p className="font-bold text-stone-900 text-lg">Alex spricht mit Ihnen</p>
+          <p className="font-bold text-stone-900 text-lg">Anna spricht mit Ihnen</p>
           <p className="text-sm text-emerald-600 font-medium flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Verbunden
