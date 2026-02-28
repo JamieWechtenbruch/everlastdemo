@@ -483,7 +483,7 @@ async def entrypoint(ctx: JobContext):
         max_tool_steps=7,
     )
 
-    await session.start(agent=agent, room=ctx.room)
+    await session.start(agent=agent, room=ctx.room, record=True)
 
     global _current_session
     _current_session = session
