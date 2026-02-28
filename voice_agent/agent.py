@@ -663,11 +663,14 @@ async def entrypoint(ctx: JobContext):
         if not _session_analytics:
             return
 
-        # Extract full transcript from chat history as fallback
-        if len(_full_transcript) <= 1:
+        # Check if we have agent messages; if not, extract from chat history
+        has_agent_msgs = any(m["role"] == "agent" for m in _full_transcript)
+        if not has_agent_msgs:
             try:
+                # Rebuild full transcript from chat history (ordered)
+                rebuilt = []
                 for msg in session.history.items:
-                    if msg.role in ("assistant", "user") and msg.content:
+                    if msg.role == "assistant" and msg.content:
                         text_parts = []
                         for part in msg.content:
                             if hasattr(part, "text") and part.text:
@@ -675,10 +678,20 @@ async def entrypoint(ctx: JobContext):
                             elif isinstance(part, str):
                                 text_parts.append(part)
                         if text_parts:
-                            text = " ".join(text_parts)
-                            role = "agent" if msg.role == "assistant" else "user"
-                            _full_transcript.append({"role": role, "text": text})
-                logger.info(f"Extracted {len(_full_transcript)} messages from chat history")
+                            rebuilt.append({"role": "agent", "text": " ".join(text_parts)})
+                    elif msg.role == "user" and msg.content:
+                        text_parts = []
+                        for part in msg.content:
+                            if hasattr(part, "text") and part.text:
+                                text_parts.append(part.text)
+                            elif isinstance(part, str):
+                                text_parts.append(part)
+                        if text_parts:
+                            rebuilt.append({"role": "user", "text": " ".join(text_parts)})
+                if rebuilt:
+                    _full_transcript.clear()
+                    _full_transcript.extend(rebuilt)
+                    logger.info(f"Rebuilt {len(rebuilt)} messages from chat history")
             except Exception as e:
                 logger.warning(f"Failed to extract chat history: {e}")
 
@@ -752,11 +765,10 @@ async def entrypoint(ctx: JobContext):
 
     @session.on("conversation_item_added")
     def on_conversation_item(ev):
-        """Track all messages for full transcript."""
+        """Track agent messages for full transcript (user tracked via user_input_transcribed)."""
         try:
             msg = ev.item
-            logger.info(f"[TRANSCRIPT] item added: role={msg.role}, content_type={type(msg.content)}, content_len={len(msg.content) if msg.content else 0}")
-            if msg.role in ("assistant", "user") and msg.content:
+            if msg.role == "assistant" and msg.content:
                 text_parts = []
                 for part in msg.content:
                     if hasattr(part, "text") and part.text:
@@ -765,11 +777,10 @@ async def entrypoint(ctx: JobContext):
                         text_parts.append(part)
                 if text_parts:
                     text = " ".join(text_parts)
-                    role = "agent" if msg.role == "assistant" else "user"
-                    _full_transcript.append({"role": role, "text": text})
-                    logger.info(f"[TRANSCRIPT] {role}: '{text[:100]}'")
+                    _full_transcript.append({"role": "agent", "text": text})
+                    logger.info(f"[TRANSCRIPT] agent: '{text[:100]}'")
         except Exception as e:
-            logger.warning(f"Error tracking conversation item: {e}")
+            logger.warning(f"Error tracking agent speech: {e}")
 
     @session.on("error")
     def on_error(ev):
