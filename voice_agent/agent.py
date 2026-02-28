@@ -374,6 +374,14 @@ async def entrypoint(ctx: JobContext):
     }
     current_weekday_de = weekday_map.get(current_weekday, current_weekday)
 
+    # Build next 7 days reference for accurate date awareness
+    upcoming_days = []
+    for i in range(7):
+        d = current_datetime + timedelta(days=i)
+        day_name = weekday_map.get(d.strftime("%A"), d.strftime("%A"))
+        upcoming_days.append(f"{day_name} {d.strftime('%d.%m.%Y')} ({d.strftime('%Y-%m-%d')})")
+    upcoming_days_str = "\n".join(upcoming_days)
+
     # ========================================================================
     # SYSTEM PROMPT — DocuSync.io B2B Sales Agent "Anna"
     # ========================================================================
@@ -431,9 +439,12 @@ async def entrypoint(ctx: JobContext):
             "Ja, sei offen und ehrlich dazu. Nutze es als Demonstration der DocuSync Technologie.\n\n"
 
             f"FAKTEN:\n"
-            f"Heute: {current_weekday_de}, {current_date_str}, {current_time_str} Uhr.\n"
-            f"Demo-Termine: Montag bis Freitag, acht bis zwanzig Uhr.\n"
+            f"Heute ist {current_weekday_de}, der {current_datetime.strftime('%d.%m.%Y')}. Aktuelle Uhrzeit: {current_time_str} Uhr.\n"
+            f"Demo-Termine: NUR Montag bis Freitag, acht bis zwanzig Uhr. KEINE Termine am Wochenende.\n"
             f"Kontakt: info at docusync Punkt io\n\n"
+            f"KALENDER-REFERENZ (nächste sieben Tage):\n{upcoming_days_str}\n"
+            f"Nutze diese Liste um Wochentage korrekt zuzuordnen. "
+            f"'Morgen' ist der erste Tag NACH heute. 'Übermorgen' ist der zweite Tag NACH heute.\n\n"
 
             "TOOLS — KRITISCH:\n"
             "Bei Terminwunsch SOFORT Tool aufrufen. Nie Verfügbarkeit erfinden.\n"
@@ -652,6 +663,25 @@ async def entrypoint(ctx: JobContext):
         if not _session_analytics:
             return
 
+        # Extract full transcript from chat history as fallback
+        if len(_full_transcript) <= 1:
+            try:
+                for msg in session.history.items:
+                    if msg.role in ("assistant", "user") and msg.content:
+                        text_parts = []
+                        for part in msg.content:
+                            if hasattr(part, "text") and part.text:
+                                text_parts.append(part.text)
+                            elif isinstance(part, str):
+                                text_parts.append(part)
+                        if text_parts:
+                            text = " ".join(text_parts)
+                            role = "agent" if msg.role == "assistant" else "user"
+                            _full_transcript.append({"role": role, "text": text})
+                logger.info(f"Extracted {len(_full_transcript)} messages from chat history")
+            except Exception as e:
+                logger.warning(f"Failed to extract chat history: {e}")
+
         lead_data = {}
         try:
             lead_data = await extract_lead_qualification()
@@ -722,21 +752,24 @@ async def entrypoint(ctx: JobContext):
 
     @session.on("conversation_item_added")
     def on_conversation_item(ev):
-        """Track agent messages for full transcript."""
+        """Track all messages for full transcript."""
         try:
             msg = ev.item
-            if msg.role == "assistant" and msg.content:
-                # Extract text from content parts
+            logger.info(f"[TRANSCRIPT] item added: role={msg.role}, content_type={type(msg.content)}, content_len={len(msg.content) if msg.content else 0}")
+            if msg.role in ("assistant", "user") and msg.content:
                 text_parts = []
                 for part in msg.content:
                     if hasattr(part, "text") and part.text:
                         text_parts.append(part.text)
+                    elif isinstance(part, str):
+                        text_parts.append(part)
                 if text_parts:
                     text = " ".join(text_parts)
-                    _full_transcript.append({"role": "agent", "text": text})
-                    logger.info(f"Agent said: '{text[:80]}'" if len(text) > 80 else f"Agent said: '{text}'")
+                    role = "agent" if msg.role == "assistant" else "user"
+                    _full_transcript.append({"role": role, "text": text})
+                    logger.info(f"[TRANSCRIPT] {role}: '{text[:100]}'")
         except Exception as e:
-            logger.warning(f"Error tracking agent speech: {e}")
+            logger.warning(f"Error tracking conversation item: {e}")
 
     @session.on("error")
     def on_error(ev):
