@@ -87,6 +87,7 @@ export function VoiceWidget() {
       });
 
       await room.connect(url, token);
+      await room.localParticipant.setMicrophoneEnabled(true);
       setState("connected");
     } catch (err) {
       console.error("Failed to connect:", err);
