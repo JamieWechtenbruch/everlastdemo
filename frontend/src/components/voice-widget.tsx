@@ -38,7 +38,7 @@ export function VoiceWidget() {
 
       // Dynamic import of livekit-client
       const { Room, RoomEvent } = await import("livekit-client");
-      const room = new Room({ autoSubscribe: true });
+      const room = new Room();
       roomRef.current = room;
 
       // Listen for data channel messages (email request from agent)
