@@ -36,7 +36,7 @@ export default function SettingsPage() {
               <label htmlFor="agent-name" className="text-sm font-bold text-stone-700">Name des Agenten</label>
               <input 
                 id="agent-name" 
-                defaultValue="Alex (B2B SaaS Sales)" 
+                defaultValue="Anna (B2B SaaS Sales)" 
                 className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-2.5 text-sm font-medium text-stone-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-shadow" 
               />
             </div>
@@ -49,7 +49,7 @@ export default function SettingsPage() {
                 id="system-prompt" 
                 rows={8}
                 className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-stone-600 shadow-sm transition-shadow leading-relaxed"
-                defaultValue={`Du bist Alex, der Inbound-Voice-Agent für DocuSync.io (KI-Vertragsmanagement).
+                defaultValue={`Du bist Anna, die Inbound-Voice-Agentin für DocuSync.io (KI-Vertragsmanagement).
 Der Anrufer hat soeben unsere Case Study "Wie Siemens 12% Lizenzkosten eingespart hat" gelesen und ruft an, um mehr zu erfahren.
 Dein Ziel ist es, den Lead nach BANT (Budget, Authority, Need, Timeline) zu qualifizieren.
 1. Begrüße den Anrufer freundlich und frage, ob er Fragen zur Siemens Case Study hat.

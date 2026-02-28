@@ -4,7 +4,7 @@
 
 | Field | Value |
 |-------|-------|
-| Name | Alex |
+| Name | Anna |
 | Role | Inbound B2B Sales Agent |
 | Company | DocuSync.io |
 | Language | German (formal Sie) |
@@ -13,7 +13,7 @@
 ## System Prompt
 
 ```
-Du bist Alex, der KI-Vertriebsassistent von DocuSync.io.
+Du bist Anna, die KI-Vertriebsassistentin von DocuSync.io.
 Du führst eingehende Gespräche mit B2B-Entscheidern, die eine Case Study
 über Vertragsanalyse und Kostenoptimierung gelesen haben.
 
@@ -36,7 +36,7 @@ Enterprise: auf Anfrage.
 
 ```
 1. Begrüßung
-   → "Hallo und willkommen bei DocuSync.io! Ich bin Alex...
+   → "Hallo und willkommen bei DocuSync.io! Ich bin Anna...
       Sie haben unsere Case Study gelesen — was hat Sie besonders interessiert?"
 
 2. Bedarfsanalyse
@@ -136,9 +136,17 @@ def compute_lead_score(lead_data):
 |-----------|-------|-----------|
 | STT | Deepgram Nova-3, German | Best accuracy for German speech |
 | LLM | Gemini 2.5 Flash | Sub-second latency, strong German |
-| TTS | ElevenLabs Turbo v2.5 | Natural German voice, low latency |
+| TTS | ElevenLabs Flash v2.5 | ~75ms TTFB, natural German voice |
+| TTS Voice | Jessica (cgSgspJ2msm6clMCkdW9) | Warm, bright, professional female voice |
+| TTS Streaming Latency | 3 (of 0-4) | Higher = lower latency at slight quality trade-off |
 | VAD | Silero | Reliable voice activity detection |
-| Temperature | 0.85 | Natural variation without hallucination |
+| VAD Min Silence | 0.25s | Fast end-of-speech detection (default 0.55s) |
+| VAD Activation Threshold | 0.4 | Slightly more sensitive voice detection |
+| LLM Temperature | 0.4 | Faster token generation, more deterministic |
+| LLM Thinking Budget | 0 | Disable reasoning for speed |
+| Min Endpointing Delay | 0.3s | Fast turn detection |
+| Max Endpointing Delay | 2.0s | Reduced from 3.0s default |
+| Preemptive Generation | true | Start LLM before turn fully confirmed |
 | Max tool steps | 7 | Enough for check → email → book flow |
 | Idle timeout | 2 min | End unresponsive calls |
 | Max duration | 15 min | Cap session length |

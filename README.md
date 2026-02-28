@@ -29,9 +29,9 @@ An AI-powered inbound sales voice agent that qualifies B2B leads and books demo 
 | Calendar | Google Calendar API (service account) |
 | Deployment | Docker Compose, Nginx |
 
-## Voice Agent: "Alex"
+## Voice Agent: "Anna"
 
-Alex is an inbound B2B sales agent for DocuSync.io, a document management SaaS. When prospects call after reading a case study about contract analysis, Alex:
+Anna is an inbound B2B sales agent for DocuSync.io, a document management SaaS. When prospects call after reading a case study about contract analysis, Anna:
 
 1. **Greets** warmly and asks what interested them about the case study
 2. **Qualifies** using BANT methodology (Budget, Authority, Need, Timeline)

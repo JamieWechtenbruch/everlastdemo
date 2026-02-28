@@ -10,7 +10,7 @@ export default function DashboardPage() {
       <div className="bg-white/60 p-6 md:p-8 rounded-[2rem] border border-stone-200/50 shadow-[0_4px_30px_-10px_rgba(234,88,12,0.04)] backdrop-blur-sm flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-stone-800">
-            Guten Morgen, Alex 👋
+            Guten Morgen 👋
           </h1>
           <p className="text-stone-500 font-medium mt-1">
             Hier ist, was dein Voice Agent heute geleistet hat. Sieht super aus! ☕️

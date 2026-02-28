@@ -19,8 +19,8 @@ const recentCalls = [
     status: "Termin gebucht",
     summary: "Sarah hat unsere Siemens-Case-Study zur KI-Vertragsanalyse gelesen. Aktueller Schmerzpunkt: Ihr Team überblickt über 400 alte Lieferantenverträge nicht, sie zahlen vermutlich 15% zu viel Lizenzkosten. Budget und Entscheidungsbefugnis (CFO) bestätigt. Demo für nächsten Dienstag gebucht.",
     transcript: [
-      { role: "agent", text: "Willkommen bei DocuSync! Mein Name ist Alex. Sie rufen wegen unserer neuen Case Study über die Siemens AG an, richtig?" },
-      { role: "lead", text: "Hallo Alex, ja genau. Ich bin Sarah Jenkins, CFO bei Acme Corp. Ich fand die Siemens-Studie spannend und wollte wissen, ob euer System auch bei mittelständischen Unternehmen funktioniert." },
+      { role: "agent", text: "Willkommen bei DocuSync! Mein Name ist Anna. Sie rufen wegen unserer neuen Case Study über die Siemens AG an, richtig?" },
+      { role: "lead", text: "Hallo Anna, ja genau. Ich bin Sarah Jenkins, CFO bei Acme Corp. Ich fand die Siemens-Studie spannend und wollte wissen, ob euer System auch bei mittelständischen Unternehmen funktioniert." },
       { role: "agent", text: "Freut mich, Sarah! Unsere KI skaliert perfekt für den Mittelstand. Wie überprüfen Sie bei Acme Corp aktuell alte Verträge auf versteckte Lizenzkosten?" },
       { role: "lead", text: "Puh, das ist ein Albtraum. Unser Legal-Team arbeitet sich manuell durch hunderte PDFs und alte Papier-Akten. Wir zahlen vermutlich massiv zu viel für Lizenzen, die wir gar nicht mehr brauchen." },
       { role: "agent", text: "Genau dort setzen wir an. Unsere KI digitalisiert alle Verträge, liest die Kündigungsfristen aus und warnt vor unnötigen Kosten. Haben Sie für eine solche Prozessoptimierung in diesem Quartal Budget vorgesehen?" },
@@ -40,7 +40,7 @@ const recentCalls = [
     status: "Follow-up",
     summary: "Marcus sieht den Mehrwert, braucht aber die Freigabe vom CTO. Hauptsorge ist die Integration mit bestehenden Legacy-Systemen. Follow-up-Aufgabe für Account Executive erstellt.",
     transcript: [
-      { role: "agent", text: "Guten Tag Herr Thorne, hier ist Alex von DocuSync.io." },
+      { role: "agent", text: "Guten Tag Herr Thorne, hier ist Anna von DocuSync.io." },
       { role: "lead", text: "Hallo, ja was gibt es?" },
       { role: "agent", text: "Ich wollte mich bezüglich Ihrer Anfrage zu unserer API kurz melden. Haben Sie spezifische Systeme, die Sie anbinden möchten?" },
       { role: "lead", text: "Ja, wir nutzen ein sehr altes, proprietäres CRM. Ich bin mir nicht sicher, ob sich das verbinden lässt." },
@@ -61,7 +61,7 @@ const recentCalls = [
     status: "Abgebrochen",
     summary: "Frühzeitig abgebrochen. Lead erwähnte, dass sie gerade einen 2-Jahres-Vertrag mit unserer Konkurrenz unterschrieben haben. Passt derzeit nicht.",
     transcript: [
-      { role: "agent", text: "Hallo Emily, Alex hier. Ich wollte fragen..." },
+      { role: "agent", text: "Hallo Emily, Anna hier. Ich wollte fragen..." },
       { role: "lead", text: "Oh, hallo. Wenn es um das Tool geht, wir haben gerade erst letzte Woche einen 2-Jahres-Vertrag bei der Konkurrenz unterschrieben. Kein Bedarf aktuell." },
       { role: "agent", text: "Oh, das ist schade für uns, aber Glückwunsch zum neuen Tool! Ich vermerke das und melde mich vielleicht in einem Jahr nochmal. Einen schönen Tag noch!" },
       { role: "lead", text: "Danke, Ihnen auch. Tschüss." }
