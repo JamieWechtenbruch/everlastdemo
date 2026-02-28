@@ -72,7 +72,7 @@ docker compose up -d
 
 # Verify
 docker compose ps
-curl http://localhost:8000/health
+curl http://localhost:8003/health
 ```
 
 ### Environment Variables
