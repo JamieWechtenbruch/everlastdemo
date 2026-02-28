@@ -446,16 +446,22 @@ async def entrypoint(ctx: JobContext):
         tools=[check_demo_availability, request_demo_email, book_demo_meeting],
     )
 
-    # --- TTS Provider ---
+    # --- TTS Provider (low-latency) ---
     natural_voice = elevenlabs.TTS(
-        model="eleven_turbo_v2_5",
+        model="eleven_flash_v2_5",  # Flash: ~75ms TTFB (vs turbo ~200ms)
         voice_id="EXAVITQu4vr4xnSDxMaL",  # Sarah — Female, warm, professional
         language="de",
+        streaming_latency=3,  # 0-4, higher = lower latency
+        enable_ssml_parsing=False,  # Disable for faster processing
     )
 
-    # --- Agent Session ---
+    # --- Agent Session (latency-optimized) ---
     session = AgentSession(
-        vad=silero.VAD.load(),
+        vad=silero.VAD.load(
+            min_silence_duration=0.25,  # 250ms silence → end of speech (default 550ms)
+            activation_threshold=0.4,  # Slightly more sensitive voice detection
+            prefix_padding_duration=0.3,  # Reduced from 500ms default
+        ),
         stt=deepgram.STT(
             model="nova-3",
             language="de",
@@ -465,15 +471,15 @@ async def entrypoint(ctx: JobContext):
         ),
         llm=google.LLM(
             model="gemini-2.5-flash",
-            temperature=0.85,
+            temperature=0.4,  # Lower = faster token generation, more deterministic
             thinking_config={"thinking_budget": 0},
         ),
         tts=natural_voice,
-        min_endpointing_delay=0.4,
-        max_endpointing_delay=3.0,
-        preemptive_generation=True,
+        min_endpointing_delay=0.3,  # Reduced from 0.4 — faster turn detection
+        max_endpointing_delay=2.0,  # Reduced from 3.0
+        preemptive_generation=True,  # Start LLM before turn confirmed
         allow_interruptions=True,
-        min_interruption_duration=0.5,
+        min_interruption_duration=0.4,  # Slightly faster interruption detection
         max_tool_steps=7,
     )
 
@@ -539,6 +545,8 @@ async def entrypoint(ctx: JobContext):
         label = type(m).__name__
         if hasattr(m, "ttfb"):
             logger.info(f"[LATENCY] {label}: TTFB={m.ttfb:.3f}s, duration={m.duration:.3f}s")
+        elif hasattr(m, "duration"):
+            logger.info(f"[LATENCY] {label}: duration={m.duration:.3f}s")
 
     def compute_lead_score(lead_data):
         """Deterministic A/B/C scoring from extracted qualification data."""
