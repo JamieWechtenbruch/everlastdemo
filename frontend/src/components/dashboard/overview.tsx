@@ -106,10 +106,10 @@ export function DashboardOverview() {
     loadKPIs()
   }, [])
 
-  const totalCalls = kpis?.total_calls ?? 828
-  const conversionRate = kpis?.conversion_rate ?? 24.5
-  const avgDuration = kpis ? formatDuration(kpis.avg_duration_seconds) : "4m 12s"
-  const demoBookings = kpis?.demo_bookings ?? 203
+  const totalCalls = kpis?.total_calls ?? 0
+  const conversionRate = kpis?.conversion_rate ?? 0
+  const avgDuration = formatDuration(kpis?.avg_duration_seconds ?? 0)
+  const demoBookings = kpis?.demo_bookings ?? 0
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
