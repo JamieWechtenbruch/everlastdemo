@@ -27,7 +27,8 @@ async def verify_voice_agent_key(x_api_key: str = Header(None)):
 async def generate_livekit_token():
     """Generate a short-lived LiveKit token for web visitors."""
     from livekit.api import AccessToken, VideoGrants
-    from livekit.protocol.room import RoomConfiguration, RoomAgentDispatch
+    from livekit.protocol.room import RoomConfiguration
+    from livekit.protocol.agent_dispatch import RoomAgentDispatch
 
     room_name = f"docusync-demo-{uuid.uuid4().hex[:8]}"
     participant_name = f"visitor-{uuid.uuid4().hex[:6]}"
