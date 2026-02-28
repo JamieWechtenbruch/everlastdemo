@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Phone, PhoneOff, Mic, Send, X } from "lucide-react";
+import { Phone, PhoneOff, Mic, Send, X, Mail } from "lucide-react";
 
 type ConnectionState = "idle" | "connecting" | "connected" | "disconnecting";
 
@@ -10,6 +10,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 export function VoiceWidget() {
   const [state, setState] = useState<ConnectionState>("idle");
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [email, setEmail] = useState("");
   const [audioLevel, setAudioLevel] = useState(0);
   const roomRef = useRef<any>(null);
@@ -25,6 +26,7 @@ export function VoiceWidget() {
     analyserRef.current = null;
     setAudioLevel(0);
     setShowEmailModal(false);
+    setEmailSent(false);
     setEmail("");
   }, []);
 
@@ -109,6 +111,7 @@ export function VoiceWidget() {
       const encoder = new TextEncoder();
       await roomRef.current.localParticipant.publishData(encoder.encode(msg), { reliable: true });
       setShowEmailModal(false);
+      setEmailSent(true);
       setEmail("");
     } catch (err) {
       console.error("Failed to send email:", err);
@@ -175,6 +178,25 @@ export function VoiceWidget() {
           <PhoneOff className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Email button — always visible as fallback (hidden after email sent) */}
+      {!showEmailModal && !emailSent && (
+        <button
+          onClick={() => setShowEmailModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-stone-100 border border-stone-200 text-sm font-semibold text-stone-600 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700 transition-colors"
+        >
+          <Mail className="w-4 h-4" />
+          E-Mail für Termin eingeben
+        </button>
+      )}
+
+      {/* Email sent confirmation */}
+      {emailSent && (
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-50 border border-emerald-200 text-sm font-semibold text-emerald-700">
+          <Mail className="w-4 h-4" />
+          E-Mail gesendet
+        </div>
+      )}
 
       {/* Email modal */}
       {showEmailModal && (

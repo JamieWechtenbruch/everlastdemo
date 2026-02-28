@@ -7,14 +7,26 @@ import { Bot, Calendar, Mic2, Check, Loader2, Shield, Clock, ListChecks, RotateC
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 const DEFAULTS = {
-  botName: "Anna (B2B SaaS Sales)",
-  systemPrompt: `Du bist Anna, die Inbound-Voice-Agentin für FlowPilot.io (KI-Workflow-Automatisierung).
-Der Anrufer hat soeben unsere Case Study "Wie Kreativstrom 45% schneller liefert" gelesen und ruft an, um mehr zu erfahren.
-Dein Ziel ist es, den Lead nach BANT (Budget, Authority, Need, Timeline) zu qualifizieren.
-1. Begrüße den Anrufer freundlich und frage, ob er Fragen zur Kreativstrom Case Study hat.
-2. Finde heraus, ob das Unternehmen aktuell Workflows manuell oder mit Excel organisiert.
-3. Versuche, ein 15-minütiges Demo-Gespräch mit einem Account Executive zu buchen.
-Halte die Antworten kurz, natürlich und unter 2 Sätzen.`,
+  botName: "Anna",
+  systemPrompt: `ÜBER KREATIVSTROM:
+Kreativstrom ist eine KI-Projektmanagement-Plattform (SaaS) für Agenturen und Marketing-Teams.
+Wir helfen Unternehmen, Projekte schneller abzuliefern mit automatisierten Briefings, smarten Timelines und Echtzeit-Reporting.
+
+KERNFEATURES:
+KI-Briefing-Automatisierung: Briefings werden automatisch aus Kundenanfragen erstellt, Aufgaben verteilt und Deadlines gesetzt. Kein manuelles Abtippen mehr.
+Smarte Timelines: KI erkennt Engpässe und schlägt Ressourcen-Umverteilung vor, bevor Deadlines gerissen werden.
+Echtzeit-Reporting: Live-Dashboard mit Projekt-Status, Team-Auslastung und Budget-Tracking. Automatische Kunden-Reports auf Knopfdruck.
+Über 200 Integrationen: Slack, Asana, Jira, HubSpot, Google Workspace und mehr.
+
+PREISE:
+Starter: 39 Euro/Monat, bis 5 User
+Business: 119 Euro/Monat, bis 25 User
+Enterprise: auf Anfrage, unbegrenzte User
+
+CASE STUDY:
+Die Agentur Nordlicht Media hat mit Kreativstrom ihre Projektlaufzeiten um 45% verkürzt und spart 12 Stunden pro Woche an Koordinationsaufwand.
+
+KONTAKT: info at kreativstrom Punkt de`,
   voiceProvider: "elevenlabs",
   voiceId: "cgSgspJ2msm6clMCkdW9",
   sttProvider: "deepgram",
@@ -161,8 +173,8 @@ export default function SettingsPage() {
               <Bot className="w-6 h-6 text-orange-600" />
             </div>
             <div>
-              <CardTitle className="text-lg">System Prompt & Logik</CardTitle>
-              <CardDescription>Definiere, wie der Agent Leads anspricht und qualifiziert.</CardDescription>
+              <CardTitle className="text-lg">Agent-Prompt & Unternehmenskontext</CardTitle>
+              <CardDescription>Produkte, Case Study, Preise und Tonalität — alles was der Agent über dein Unternehmen wissen muss.</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="pt-6 grid gap-5">
@@ -177,11 +189,11 @@ export default function SettingsPage() {
             </div>
             <div className="grid gap-2">
               <label htmlFor="system-prompt" className="text-sm font-bold text-stone-700">
-                System Prompt
+                Unternehmenskontext & Anweisungen
               </label>
               <textarea
                 id="system-prompt"
-                rows={8}
+                rows={14}
                 value={settings.systemPrompt}
                 onChange={(e) => update("systemPrompt", e.target.value)}
                 className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-stone-600 shadow-sm transition-shadow leading-relaxed"
@@ -247,7 +259,7 @@ export default function SettingsPage() {
               <Mic2 className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <CardTitle className="text-lg">Voice-Stack Konfiguration</CardTitle>
+              <CardTitle className="text-lg">Voice Stack</CardTitle>
               <CardDescription>Aktiver Tech-Stack für Echtzeit-Sprachverarbeitung.</CardDescription>
             </div>
           </CardHeader>
@@ -332,7 +344,7 @@ export default function SettingsPage() {
               <h4 className="text-sm font-bold text-amber-800 mb-1.5">Sicherheitsfeatures aktiv</h4>
               <ul className="text-xs text-amber-700/80 font-medium space-y-1">
                 <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Anti-Jailbreak & Prompt-Injection-Schutz</li>
-                <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Themen-Guardrails (nur FlowPilot-relevante Themen)</li>
+                <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Themen-Guardrails (nur Kreativstrom-relevante Themen)</li>
                 <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Eskalierendes Warnsystem bei Manipulation</li>
                 <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Automatische Session-Beendigung bei Timeout</li>
               </ul>

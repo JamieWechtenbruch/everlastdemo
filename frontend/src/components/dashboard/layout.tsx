@@ -16,7 +16,6 @@ import {
   Calendar,
   LogOut,
   User,
-  Package,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 
@@ -26,7 +25,6 @@ const navItems = [
   { href: "/dashboard", label: "Übersicht", icon: LayoutDashboard },
   { href: "/dashboard/calls", label: "Letzte Anrufe", icon: PhoneCall },
   { href: "/dashboard/leads", label: "Leads", icon: Users },
-  { href: "/dashboard/products", label: "Produkte", icon: Package },
 ];
 
 type CallResult = {
@@ -47,16 +45,16 @@ type SearchSuggestion = {
   icon: "call" | "lead" | "setting" | "page";
 };
 
-const USER_KEY = "flowpilot_user";
-const NOTIF_SEEN_KEY = "flowpilot_notif_seen";
+const USER_KEY = "kreativstrom_user";
+const NOTIF_SEEN_KEY = "kreativstrom_notif_seen";
 
 function getUser(): { firstName: string; lastName: string; email: string } {
-  if (typeof window === "undefined") return { firstName: "Max", lastName: "Mustermann", email: "max@flowpilot.io" };
+  if (typeof window === "undefined") return { firstName: "Max", lastName: "Mustermann", email: "max@kreativstrom.de" };
   try {
     const stored = localStorage.getItem(USER_KEY);
     if (stored) return JSON.parse(stored);
   } catch {}
-  const def = { firstName: "Max", lastName: "Mustermann", email: "max@flowpilot.io" };
+  const def = { firstName: "Max", lastName: "Mustermann", email: "max@kreativstrom.de" };
   localStorage.setItem(USER_KEY, JSON.stringify(def));
   return def;
 }
@@ -104,7 +102,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   // User profile
   const [profileOpen, setProfileOpen] = useState(false);
-  const [user, setUser] = useState({ firstName: "Max", lastName: "Mustermann", email: "max@flowpilot.io" });
+  const [user, setUser] = useState({ firstName: "Max", lastName: "Mustermann", email: "max@kreativstrom.de" });
   const [editingProfile, setEditingProfile] = useState(false);
   const [editUser, setEditUser] = useState(user);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -162,7 +160,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       { label: "Letzte Anrufe", description: "Anrufhistorie & Transkripte", href: "/dashboard/calls", keywords: ["anrufe", "calls", "transkript", "gespräch"] },
       { label: "Leads", description: "Lead-Übersicht & Qualifizierung", href: "/dashboard/leads", keywords: ["leads", "qualifizierung", "score", "kontakt"] },
       { label: "Einstellungen", description: "Agent-Konfiguration & Tech-Stack", href: "/dashboard/settings", keywords: ["einstellungen", "settings", "konfiguration", "agent"] },
-      { label: "Produkte", description: "FlowPilot Produkte, Preise & Team", href: "/dashboard/products", keywords: ["produkte", "products", "preise", "pricing", "team", "automate", "cockpit", "connect", "flowpilot"] },
     ];
     pages.forEach((p) => {
       if (p.label.toLowerCase().includes(q) || p.keywords.some((k) => k.includes(q))) {
@@ -226,13 +223,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen w-full bg-[#faf8f5] text-stone-800 font-sans">
       {/* Sidebar - Desktop */}
-      <aside className="hidden w-64 flex-col border-r border-stone-200/50 bg-[#faf8f5]/80 backdrop-blur-md md:flex">
+      <aside className="hidden w-64 flex-col border-r border-stone-200/50 bg-[#faf8f5]/80 backdrop-blur-md md:flex sticky top-0 h-screen overflow-hidden">
         <div className="flex h-16 items-center px-6 mt-4">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight text-stone-900">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white shadow-sm shadow-orange-500/20">
               <Sparkles className="w-4 h-4" />
             </div>
-            <span>FlowPilot</span>
+            <span>Kreativstrom</span>
           </Link>
         </div>
         <div className="flex-1 overflow-auto py-6">
@@ -279,7 +276,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white shadow-sm shadow-orange-500/20">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                FlowPilot
+                Kreativstrom
               </span>
               <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-stone-500 hover:bg-stone-100 rounded-xl">
                 <X className="w-5 h-5" />

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FlowPilot.io — KI-Vertriebsassistent",
-  description: "B2B Voice Agent für Lead-Qualifizierung und Demo-Terminbuchung",
+  title: "Kreativstrom — KI-Projektmanagement für Agenturen",
+  description: "Die SaaS-Plattform für smarte Briefings, automatisierte Timelines und Echtzeit-Reporting.",
 };
 
 export default function RootLayout({

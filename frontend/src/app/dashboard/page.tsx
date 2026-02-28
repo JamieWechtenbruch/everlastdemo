@@ -14,7 +14,7 @@ function getGreeting(name: string): string {
 function getUserFirstName(): string {
   if (typeof window === "undefined") return "";
   try {
-    const stored = localStorage.getItem("flowpilot_user");
+    const stored = localStorage.getItem("kreativstrom_user");
     if (stored) return JSON.parse(stored).firstName || "";
   } catch {}
   return "Max";
