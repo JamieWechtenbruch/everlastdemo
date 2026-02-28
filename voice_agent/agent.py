@@ -449,7 +449,7 @@ async def entrypoint(ctx: JobContext):
     # --- TTS Provider (low-latency) ---
     natural_voice = elevenlabs.TTS(
         model="eleven_flash_v2_5",  # Flash: ~75ms TTFB (vs turbo ~200ms)
-        voice_id="EXAVITQu4vr4xnSDxMaL",  # Sarah — Female, warm, professional
+        voice_id="cgSgspJ2msm6clMCkdW9",  # Jessica — Playful, Bright, Warm
         language="de",
         streaming_latency=3,  # 0-4, higher = lower latency
         enable_ssml_parsing=False,  # Disable for faster processing
