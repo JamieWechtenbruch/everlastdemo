@@ -19,7 +19,7 @@ def parse_cors_origins(origins_str: str = None) -> List[str]:
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "FlowPilot.io Voice Agent API"
+    APP_NAME: str = "Kreativstrom Voice Agent API"
     VERSION: str = "1.0.0"
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"

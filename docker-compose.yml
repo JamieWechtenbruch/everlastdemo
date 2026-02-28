@@ -41,7 +41,7 @@ services:
       dockerfile: Dockerfile
     container_name: docusync-backend
     environment:
-      APP_NAME: "FlowPilot.io Voice Agent API"
+      APP_NAME: "Kreativstrom Voice Agent API"
       VERSION: "1.0.0"
       ENVIRONMENT: production
       DEBUG: "false"

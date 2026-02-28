@@ -30,7 +30,7 @@ async def generate_livekit_token():
     from livekit.protocol.room import RoomConfiguration
     from livekit.protocol.agent_dispatch import RoomAgentDispatch
 
-    room_name = f"flowpilot-demo-{uuid.uuid4().hex[:8]}"
+    room_name = f"kreativstrom-demo-{uuid.uuid4().hex[:8]}"
     participant_name = f"visitor-{uuid.uuid4().hex[:6]}"
 
     token = (
@@ -46,7 +46,7 @@ async def generate_livekit_token():
             can_publish_data=True,
         ))
         .with_room_config(RoomConfiguration(
-            agents=[RoomAgentDispatch(agent_name="flowpilot-agent")],
+            agents=[RoomAgentDispatch(agent_name="kreativstrom-agent")],
         ))
         .to_jwt()
     )
