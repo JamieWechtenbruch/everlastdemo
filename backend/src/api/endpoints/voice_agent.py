@@ -30,7 +30,7 @@ async def generate_livekit_token():
     from livekit.protocol.room import RoomConfiguration
     from livekit.protocol.agent_dispatch import RoomAgentDispatch
 
-    room_name = f"docusync-demo-{uuid.uuid4().hex[:8]}"
+    room_name = f"flowpilot-demo-{uuid.uuid4().hex[:8]}"
     participant_name = f"visitor-{uuid.uuid4().hex[:6]}"
 
     token = (
@@ -46,7 +46,7 @@ async def generate_livekit_token():
             can_publish_data=True,
         ))
         .with_room_config(RoomConfiguration(
-            agents=[RoomAgentDispatch(agent_name="docusync-agent")],
+            agents=[RoomAgentDispatch(agent_name="flowpilot-agent")],
         ))
         .to_jwt()
     )
@@ -59,10 +59,8 @@ async def generate_livekit_token():
 
 
 @router.get("/ai-settings")
-async def get_ai_settings(
-    authorized: bool = Depends(verify_voice_agent_key),
-):
-    """Get AI agent settings from Redis."""
+async def get_ai_settings():
+    """Get AI agent settings from Redis (no auth — dashboard internal)."""
     try:
         redis = get_redis()
         if redis:
@@ -74,22 +72,35 @@ async def get_ai_settings(
 
     return {
         "enabled": True,
-        "botName": "Anna",
-        "fallbackPhone": "",
+        "botName": "Anna (B2B SaaS Sales)",
+        "systemPrompt": "",
+        "voiceProvider": "elevenlabs",
+        "voiceId": "cgSgspJ2msm6clMCkdW9",
+        "sttProvider": "deepgram",
+        "sttModel": "nova-3",
+        "llmProvider": "google",
+        "llmModel": "gemini-2.5-flash",
+        "idleTimeout": 60,
+        "maxSessionDuration": 600,
+        "qualificationCriteria": [
+            "Branche & Unternehmensgröße",
+            "Aktuelle Lösung / Pain Points",
+            "Budget & Zeitrahmen",
+            "Entscheidungsträger (Authority)",
+        ],
     }
 
 
 @router.post("/ai-settings")
 async def save_ai_settings(
     settings_data: dict = Body(...),
-    authorized: bool = Depends(verify_voice_agent_key),
 ):
-    """Save AI agent settings to Redis."""
+    """Save AI agent settings to Redis (no auth — dashboard internal)."""
     try:
         redis = get_redis()
         if redis:
             await redis.set(AI_SETTINGS_KEY, json.dumps(settings_data))
-            logger.info(f"AI settings saved: {settings_data}")
+            logger.info(f"AI settings saved")
             return {"status": "success"}
     except Exception as e:
         logger.error(f"Error saving AI settings: {e}")

@@ -82,6 +82,14 @@ function getLeadStatus(call: CallData): string {
   return "Unqualifiziert";
 }
 
+function csvField(value: string | number | boolean | null | undefined): string {
+  const str = String(value ?? "");
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
 export default function LeadsPage() {
   const [calls, setCalls] = useState<CallData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,25 +140,25 @@ export default function LeadsPage() {
     const headers = ["ID", "Score", "Branche", "Unternehmensgröße", "Status", "Datum", "Dauer", "Demo gebucht", "Zusammenfassung"];
     const csvRows = [headers.join(",")];
     filteredLeads.forEach((lead) => {
-      const summary = `"${lead.summary.replace(/"/g, '""')}"`;
       const row = [
-        lead.callId,
-        lead.score,
-        lead.branche,
-        lead.unternehmensgroesse,
-        lead.status,
-        new Date(lead.lastContact).toLocaleString("de-DE"),
-        lead.duration,
-        lead.demoBooked ? "Ja" : "Nein",
-        summary,
+        csvField(lead.callId),
+        csvField(lead.score),
+        csvField(lead.branche),
+        csvField(lead.unternehmensgroesse),
+        csvField(lead.status),
+        csvField(new Date(lead.lastContact).toLocaleString("de-DE")),
+        csvField(lead.duration),
+        csvField(lead.demoBooked ? "Ja" : "Nein"),
+        csvField(lead.summary),
       ];
       csvRows.push(row.join(","));
     });
-    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `docusync-leads_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute("download", `flowpilot-leads_${new Date().toISOString().slice(0, 10)}.csv`);
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();

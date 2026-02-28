@@ -4,9 +4,9 @@ Dashboard KPIs and call log management
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, case, cast, Date
+from sqlalchemy import select, func, and_, case, cast, Date, delete
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 import logging
 
 from src.database.connection import get_db
@@ -247,3 +247,32 @@ async def get_call_logs(
         "page": page,
         "per_page": per_page,
     }
+
+
+@router.delete("/analytics/calls/{call_id}")
+async def delete_call_log(
+    call_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a single call log entry."""
+    result = await db.execute(select(CallLog).where(CallLog.id == call_id))
+    call = result.scalar_one_or_none()
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
+    await db.delete(call)
+    await db.commit()
+    return {"status": "deleted", "id": call_id}
+
+
+@router.post("/analytics/calls/delete-batch")
+async def delete_call_logs_batch(
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete multiple call log entries by IDs."""
+    ids: List[int] = data.get("ids", [])
+    if not ids:
+        raise HTTPException(status_code=400, detail="No IDs provided")
+    await db.execute(delete(CallLog).where(CallLog.id.in_(ids)))
+    await db.commit()
+    return {"status": "deleted", "count": len(ids)}

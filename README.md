@@ -1,4 +1,4 @@
-# DocuSync.io — AI Voice Agent for B2B Lead Qualification
+# FlowPilot.io — AI Voice Agent for B2B Lead Qualification
 
 An AI-powered inbound sales voice agent that qualifies B2B leads and books demo appointments, built for the Business Development voice agent competition.
 
@@ -6,7 +6,7 @@ An AI-powered inbound sales voice agent that qualifies B2B leads and books demo 
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    DocuSync.io Platform                   │
+│                    FlowPilot.io Platform                  │
 ├──────────┬──────────────┬──────────────┬────────────────┤
 │ Frontend │   Backend    │ Voice Agent  │  Infrastructure │
 │ Next.js  │   FastAPI    │   LiveKit    │                │
@@ -31,16 +31,16 @@ An AI-powered inbound sales voice agent that qualifies B2B leads and books demo 
 
 ## Voice Agent: "Anna"
 
-Anna is an inbound B2B sales agent for DocuSync.io, a document management SaaS. When prospects call after reading a case study about contract analysis, Anna:
+Anna is an inbound B2B sales agent for FlowPilot.io, a workflow automation SaaS. When prospects call after reading a case study about how agency Kreativstrom cut project timelines by 45%, Anna:
 
 1. **Greets** warmly and asks what interested them about the case study
 2. **Qualifies** using BANT methodology (Budget, Authority, Need, Timeline)
-3. **Positions** relevant DocuSync.io features based on their pain points
+3. **Positions** relevant FlowPilot products (Automate, Cockpit, Connect) based on their pain points
 4. **Books** a demo appointment via Google Calendar integration
 
 ### Qualification Criteria
 - Industry & company size
-- Current document management solution
+- Current workflow/process management solution
 - Key pain points and challenges
 - Budget availability & decision timeline
 - Decision-maker identification
@@ -82,9 +82,8 @@ See `.env.example` for all required configuration.
 ## Project Structure
 
 ```
-docusync-agent/
 ├── frontend/           # Next.js dashboard & landing page
-│   ├── src/app/        # Pages (landing, dashboard, calls, leads, settings)
+│   ├── src/app/        # Pages (landing, dashboard, calls, leads, products, settings)
 │   └── src/components/ # Reusable UI components
 ├── backend/            # FastAPI REST API
 │   └── src/
@@ -105,3 +104,4 @@ docusync-agent/
 3. **Data Channel for Email**: LiveKit data channel enables browser-agent coordination without additional WebSocket infrastructure
 4. **Deterministic Lead Scoring**: Rule-based scoring ensures consistent, explainable lead grades
 5. **Service Account for Calendar**: No OAuth flow needed — agent books directly, simplifying the demo experience
+6. **Redis-Backed Settings**: Agent reads name, timeouts, and qualification criteria from Redis at session start — configurable from dashboard without redeployment

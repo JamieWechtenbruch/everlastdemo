@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DocuSync.io — KI-Vertriebsassistent",
+  title: "FlowPilot.io — KI-Vertriebsassistent",
   description: "B2B Voice Agent für Lead-Qualifizierung und Demo-Terminbuchung",
 };
 

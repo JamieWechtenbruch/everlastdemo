@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Phone, Calendar, Clock, Download, MessageSquare, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Phone, Calendar, Clock, Download, MessageSquare, ChevronDown, ChevronUp, Loader2, Trash2, AlertTriangle } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -71,28 +71,39 @@ function phaseToStatusVariant(phase: string, demoBooked: boolean): "success" | "
   return "secondary";
 }
 
+function csvField(value: string | number | boolean | null | undefined): string {
+  const str = String(value ?? "");
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
 export default function CallsPage() {
   const [calls, setCalls] = useState<CallData[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedCallId, setExpandedCallId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<CallData | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const perPage = 20;
 
-  useEffect(() => {
-    async function loadCalls() {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_URL}/api/analytics/calls?page=${page}&per_page=${perPage}`);
-        if (!res.ok) throw new Error("Failed");
-        const data = await res.json();
-        setCalls(data.calls || []);
-        setTotal(data.total || 0);
-      } catch {
-        setCalls([]);
-      }
-      setLoading(false);
+  const loadCalls = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/analytics/calls?page=${page}&per_page=${perPage}`);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      setCalls(data.calls || []);
+      setTotal(data.total || 0);
+    } catch {
+      setCalls([]);
     }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     loadCalls();
   }, [page]);
 
@@ -100,29 +111,44 @@ export default function CallsPage() {
     setExpandedCallId(expandedCallId === id ? null : id);
   };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/analytics/calls/${deleteTarget.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setCalls((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+        setTotal((prev) => prev - 1);
+        if (expandedCallId === deleteTarget.id) setExpandedCallId(null);
+      }
+    } catch {}
+    setDeleting(false);
+    setDeleteTarget(null);
+  };
+
   const handleExportCSV = () => {
     const headers = ["ID", "Datum", "Dauer (s)", "Phase", "Score", "Branche", "Unternehmensgröße", "Demo gebucht", "Zusammenfassung"];
     const csvRows = [headers.join(",")];
     calls.forEach((call) => {
-      const summary = `"${(call.transcript_summary || "").replace(/"/g, '""')}"`;
       const row = [
-        call.id,
-        new Date(call.call_datetime).toLocaleString("de-DE"),
-        call.duration_seconds,
-        call.conversation_phase,
-        call.lead_score || "-",
-        call.lead_branche || "-",
-        call.lead_unternehmensgroesse || "-",
-        call.demo_booked ? "Ja" : "Nein",
-        summary,
+        csvField(call.id),
+        csvField(new Date(call.call_datetime).toLocaleString("de-DE")),
+        csvField(call.duration_seconds),
+        csvField(call.conversation_phase),
+        csvField(call.lead_score || "-"),
+        csvField(call.lead_branche || "-"),
+        csvField(call.lead_unternehmensgroesse || "-"),
+        csvField(call.demo_booked ? "Ja" : "Nein"),
+        csvField(call.transcript_summary || ""),
       ];
       csvRows.push(row.join(","));
     });
-    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const bom = "\uFEFF";
+    const blob = new Blob([bom + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `docusync-calls_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute("download", `flowpilot-calls_${new Date().toISOString().slice(0, 10)}.csv`);
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -149,6 +175,44 @@ export default function CallsPage() {
           CSV Export
         </button>
       </div>
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => !deleting && setDeleteTarget(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-stone-200 p-6 max-w-sm w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-stone-900">Anruf löschen?</h3>
+                <p className="text-sm text-stone-500">Anruf #{deleteTarget.id}{deleteTarget.lead_branche ? ` — ${deleteTarget.lead_branche}` : ""}</p>
+              </div>
+            </div>
+            <p className="text-sm text-stone-600 mb-6">
+              Dieser Anruf wird unwiderruflich gelöscht. Alle Daten, Transkripte und Lead-Informationen gehen verloren.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-stone-100 text-stone-700 text-sm font-bold hover:bg-stone-200 transition disabled:opacity-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -208,6 +272,13 @@ export default function CallsPage() {
                         <Badge variant={statusVariant} className="shadow-sm">
                           {status}
                         </Badge>
+                        <button
+                          onClick={() => setDeleteTarget(call)}
+                          className="p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                          title="Anruf löschen"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
 
