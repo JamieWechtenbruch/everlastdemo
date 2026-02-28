@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: docusync-postgres
+    environment:
+      POSTGRES_DB: docusync
+      POSTGRES_USER: docusync
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docusync"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: docusync-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: docusync-backend
+    environment:
+      APP_NAME: "DocuSync.io Voice Agent API"
+      VERSION: "1.0.0"
+      ENVIRONMENT: production
+      DEBUG: "false"
+      DATABASE_URL: postgresql://docusync:${POSTGRES_PASSWORD:-changeme123}@postgres:5432/docusync
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-please-change-this}
+      VOICE_AGENT_API_KEY: ${VOICE_AGENT_API_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-["http://localhost:3000","http://localhost"]}
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # LiveKit Voice Agent
+  voice-agent:
+    build:
+      context: ./voice_agent
+      dockerfile: Dockerfile
+    container_name: docusync-voice
+    environment:
+      BACKEND_URL: http://backend:8000
+      VOICE_AGENT_API_KEY: ${VOICE_AGENT_API_KEY}
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      ELEVEN_API_KEY: ${ELEVEN_API_KEY}
+      GOOGLE_CALENDAR_CREDENTIALS: /app/google_credentials.json
+      GOOGLE_CALENDAR_ID: ${GOOGLE_CALENDAR_ID:-primary}
+    volumes:
+      - ./voice_agent/google_credentials.json:/app/google_credentials.json:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+    restart: unless-stopped
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+    container_name: docusync-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: docusync-network
