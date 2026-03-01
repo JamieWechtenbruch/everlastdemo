@@ -2,31 +2,23 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot, Calendar, Mic2, Check, Loader2, Shield, Clock, ListChecks, RotateCcw } from "lucide-react";
+import { Bot, Calendar, Mic2, Check, Loader2, Shield, Clock, ListChecks, RotateCcw, Building2, Tag, BookOpen, Mail } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 const DEFAULTS = {
   botName: "Anna",
-  systemPrompt: `ÜBER KREATIVSTROM:
-Kreativstrom ist eine KI-Projektmanagement-Plattform (SaaS) für Agenturen und Marketing-Teams.
-Wir helfen Unternehmen, Projekte schneller abzuliefern mit automatisierten Briefings, smarten Timelines und Echtzeit-Reporting.
-
-KERNFEATURES:
-KI-Briefing-Automatisierung: Briefings werden automatisch aus Kundenanfragen erstellt, Aufgaben verteilt und Deadlines gesetzt. Kein manuelles Abtippen mehr.
+  companyDescription: `Kreativstrom ist eine KI-Projektmanagement-Plattform (SaaS) für Agenturen und Marketing-Teams.
+Wir helfen Unternehmen, Projekte schneller abzuliefern mit automatisierten Briefings, smarten Timelines und Echtzeit-Reporting.`,
+  products: `KI-Briefing-Automatisierung: Briefings werden automatisch aus Kundenanfragen erstellt, Aufgaben verteilt und Deadlines gesetzt. Kein manuelles Abtippen mehr.
 Smarte Timelines: KI erkennt Engpässe und schlägt Ressourcen-Umverteilung vor, bevor Deadlines gerissen werden.
 Echtzeit-Reporting: Live-Dashboard mit Projekt-Status, Team-Auslastung und Budget-Tracking. Automatische Kunden-Reports auf Knopfdruck.
-Über 200 Integrationen: Slack, Asana, Jira, HubSpot, Google Workspace und mehr.
-
-PREISE:
-Starter: 39 Euro/Monat, bis 5 User
-Business: 119 Euro/Monat, bis 25 User
-Enterprise: auf Anfrage, unbegrenzte User
-
-CASE STUDY:
-Die Agentur Nordlicht Media hat mit Kreativstrom ihre Projektlaufzeiten um 45% verkürzt und spart 12 Stunden pro Woche an Koordinationsaufwand.
-
-KONTAKT: info at kreativstrom Punkt de`,
+Über 200 Integrationen: Slack, Asana, Jira, HubSpot, Google Workspace und mehr.`,
+  pricing: `Starter: 39 Euro/Monat, bis 5 Projekte
+Business: 119 Euro/Monat, bis 25 Projekte, Priority Support
+Enterprise: auf Anfrage, unbegrenzte Projekte, dedizierter Account Manager`,
+  caseStudy: `Die Agentur Nordlicht Media hat mit Kreativstrom ihre Projektlaufzeiten um 45% verkürzt und spart 12 Stunden pro Woche an Koordinationsaufwand. Briefing-Erstellung von 3 Stunden auf 20 Minuten reduziert.`,
+  contactInfo: "info at kreativstrom Punkt de",
   voiceProvider: "elevenlabs",
   voiceId: "cgSgspJ2msm6clMCkdW9",
   sttProvider: "deepgram",
@@ -59,12 +51,17 @@ export default function SettingsPage() {
         const res = await fetch(`${API_URL}/api/ai-settings`);
         if (res.ok) {
           const data = await res.json();
-          setSettings((prev) => ({
-            ...prev,
-            ...Object.fromEntries(
-              Object.entries(data).filter(([_, v]) => v !== undefined && v !== null && v !== "")
-            ),
-          }));
+          // Migrate old systemPrompt format to new fields if needed
+          if (data.systemPrompt && !data.companyDescription) {
+            // Old format — keep as-is, don't overwrite defaults with empty strings
+          } else {
+            setSettings((prev) => ({
+              ...prev,
+              ...Object.fromEntries(
+                Object.entries(data).filter(([_, v]) => v !== undefined && v !== null && v !== "")
+              ),
+            }));
+          }
         }
       } catch {}
       setLoaded(true);
@@ -140,7 +137,7 @@ export default function SettingsPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-stone-900">Agenten-Einstellungen</h1>
           <p className="text-stone-500 font-medium mt-1 flex items-center gap-2">
-            Konfiguriere deinen KI-Voice-Agenten, Prompts und API-Integrationen.
+            Konfiguriere deinen KI-Voice-Agenten und Unternehmenskontext.
             <span
               className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full transition-all duration-300 ${
                 saveStatus === "saving"
@@ -166,15 +163,15 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6">
-        {/* Prompt Configuration */}
+        {/* Agent Identity */}
         <Card className="overflow-hidden border-stone-200/50">
           <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b border-stone-100/80 pb-6">
             <div className="w-12 h-12 rounded-2xl bg-orange-50 border border-orange-100/80 flex items-center justify-center">
               <Bot className="w-6 h-6 text-orange-600" />
             </div>
             <div>
-              <CardTitle className="text-lg">Agent-Prompt & Unternehmenskontext</CardTitle>
-              <CardDescription>Produkte, Case Study, Preise und Tonalität — alles was der Agent über dein Unternehmen wissen muss.</CardDescription>
+              <CardTitle className="text-lg">Agent-Identität</CardTitle>
+              <CardDescription>Name und Unternehmensbeschreibung für den Agenten.</CardDescription>
             </div>
           </CardHeader>
           <CardContent className="pt-6 grid gap-5">
@@ -186,21 +183,102 @@ export default function SettingsPage() {
                 onChange={(e) => update("botName", e.target.value)}
                 className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-2.5 text-sm font-medium text-stone-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-shadow"
               />
+              <p className="text-xs text-stone-400">So stellt sich der Agent am Telefon vor.</p>
             </div>
             <div className="grid gap-2">
-              <label htmlFor="system-prompt" className="text-sm font-bold text-stone-700">
-                Unternehmenskontext & Anweisungen
+              <label htmlFor="company-desc" className="text-sm font-bold text-stone-700 flex items-center gap-2">
+                <Building2 className="w-3.5 h-3.5 text-stone-400" />
+                Unternehmensbeschreibung
               </label>
               <textarea
-                id="system-prompt"
-                rows={14}
-                value={settings.systemPrompt}
-                onChange={(e) => update("systemPrompt", e.target.value)}
-                className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-stone-600 shadow-sm transition-shadow leading-relaxed"
+                id="company-desc"
+                rows={3}
+                value={settings.companyDescription}
+                onChange={(e) => update("companyDescription", e.target.value)}
+                className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-stone-600 shadow-sm transition-shadow leading-relaxed"
+                placeholder="Beschreibe dein Unternehmen und was es tut..."
               />
-              <p className="text-xs text-stone-500 font-medium mt-1">
-                Die Kernlogik deiner Voice-KI. Variablen wie <code className="bg-stone-100 px-1.5 py-0.5 rounded-md text-orange-600">{"{lead_name}"}</code> werden unterstützt.
-              </p>
+              <p className="text-xs text-stone-400">Was ist euer Unternehmen? Was macht ihr? Für wen?</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Products & Pricing */}
+        <Card className="overflow-hidden border-stone-200/50">
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b border-stone-100/80 pb-6">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100/80 flex items-center justify-center">
+              <Tag className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Produkte & Preise</CardTitle>
+              <CardDescription>Der Agent nutzt diese Infos, um passende Lösungen zu positionieren.</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 grid gap-5">
+            <div className="grid gap-2">
+              <label htmlFor="products" className="text-sm font-bold text-stone-700">Produkte / Features</label>
+              <textarea
+                id="products"
+                rows={5}
+                value={settings.products}
+                onChange={(e) => update("products", e.target.value)}
+                className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-stone-600 shadow-sm transition-shadow leading-relaxed"
+                placeholder="Feature 1: Beschreibung...&#10;Feature 2: Beschreibung..."
+              />
+              <p className="text-xs text-stone-400">Ein Feature pro Zeile. Der Agent wählt passende Features basierend auf Kundenbedarf.</p>
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="pricing" className="text-sm font-bold text-stone-700">Preismodell</label>
+              <textarea
+                id="pricing"
+                rows={3}
+                value={settings.pricing}
+                onChange={(e) => update("pricing", e.target.value)}
+                className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-stone-600 shadow-sm transition-shadow leading-relaxed"
+                placeholder="Starter: 39€/Monat...&#10;Business: 119€/Monat..."
+              />
+              <p className="text-xs text-stone-400">Paketnamen und Preise. Der Agent nennt diese auf Nachfrage.</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Case Study & Contact */}
+        <Card className="overflow-hidden border-stone-200/50">
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b border-stone-100/80 pb-6">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100/80 flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-emerald-600" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Case Study & Kontakt</CardTitle>
+              <CardDescription>Referenzen und Kontaktdaten für Glaubwürdigkeit im Gespräch.</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 grid gap-5">
+            <div className="grid gap-2">
+              <label htmlFor="case-study" className="text-sm font-bold text-stone-700">Case Study / Referenz</label>
+              <textarea
+                id="case-study"
+                rows={3}
+                value={settings.caseStudy}
+                onChange={(e) => update("caseStudy", e.target.value)}
+                className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-stone-600 shadow-sm transition-shadow leading-relaxed"
+                placeholder="Kunde X hat mit unserem Produkt Y% bessere Ergebnisse erzielt..."
+              />
+              <p className="text-xs text-stone-400">Der Agent nutzt diese Referenz als Social Proof bei Einwänden.</p>
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="contact-info" className="text-sm font-bold text-stone-700 flex items-center gap-2">
+                <Mail className="w-3.5 h-3.5 text-stone-400" />
+                Kontakt-E-Mail
+              </label>
+              <input
+                id="contact-info"
+                value={settings.contactInfo}
+                onChange={(e) => update("contactInfo", e.target.value)}
+                className="w-full bg-white border border-stone-200/80 rounded-xl px-4 py-2.5 text-sm font-medium text-stone-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-shadow"
+                placeholder="info at firma Punkt de"
+              />
+              <p className="text-xs text-stone-400">Aussprache-Format verwenden (z.B. „info at kreativstrom Punkt de").</p>
             </div>
           </CardContent>
         </Card>
@@ -255,8 +333,8 @@ export default function SettingsPage() {
         {/* Voice Stack — Display Only */}
         <Card className="overflow-hidden border-stone-200/50">
           <CardHeader className="flex flex-row items-center gap-4 space-y-0 border-b border-stone-100/80 pb-6">
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100/80 flex items-center justify-center">
-              <Mic2 className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100/80 flex items-center justify-center">
+              <Mic2 className="w-6 h-6 text-sky-600" />
             </div>
             <div>
               <CardTitle className="text-lg">Voice Stack</CardTitle>
@@ -284,14 +362,6 @@ export default function SettingsPage() {
                 <p className="text-xs text-stone-500 mt-0.5">Echtzeit-Voice mit WebRTC, Latenz &lt;1.5s</p>
               </div>
               <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200/60">Aktiv</span>
-            </div>
-            <div className="rounded-2xl border bg-stone-50 border-stone-200/50 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Voice ID (ElevenLabs)</span>
-                  <p className="text-xs font-mono text-stone-500 mt-1">{settings.voiceId}</p>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -344,7 +414,7 @@ export default function SettingsPage() {
               <h4 className="text-sm font-bold text-amber-800 mb-1.5">Sicherheitsfeatures aktiv</h4>
               <ul className="text-xs text-amber-700/80 font-medium space-y-1">
                 <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Anti-Jailbreak & Prompt-Injection-Schutz</li>
-                <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Themen-Guardrails (nur Kreativstrom-relevante Themen)</li>
+                <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Themen-Guardrails (nur unternehmensrelevante Themen)</li>
                 <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Eskalierendes Warnsystem bei Manipulation</li>
                 <li className="flex items-center gap-2"><Check className="w-3 h-3 text-amber-600 shrink-0" /> Automatische Session-Beendigung bei Timeout</li>
               </ul>

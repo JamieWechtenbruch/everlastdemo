@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Download, Filter, Building2, Clock, Phone, Loader2, Users, ChevronDown } from "lucide-react";
+import { Download, Filter, Building2, Clock, Phone, Loader2, Users, ChevronDown, ChevronUp, Calendar, Mail, Trash2, AlertTriangle } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -95,6 +95,23 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true);
   const [scoreFilter, setScoreFilter] = useState<string>("all");
   const [showFilter, setShowFilter] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/analytics/calls/${deleteTarget.callId}`, { method: "DELETE" });
+      if (res.ok) {
+        setCalls((prev) => prev.filter((c) => c.id !== deleteTarget.callId));
+        if (expandedId === deleteTarget.callId) setExpandedId(null);
+      }
+    } catch {}
+    setDeleting(false);
+    setDeleteTarget(null);
+  };
 
   useEffect(() => {
     async function loadLeads() {
@@ -227,6 +244,44 @@ export default function LeadsPage() {
         </div>
       </div>
 
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => !deleting && setDeleteTarget(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-stone-200 p-6 max-w-sm w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-stone-900">Lead löschen?</h3>
+                <p className="text-sm text-stone-500">Lead #{deleteTarget.callId}{deleteTarget.branche !== "Unbekannt" ? ` — ${deleteTarget.branche}` : ""}</p>
+              </div>
+            </div>
+            <p className="text-sm text-stone-600 mb-6">
+              Dieser Lead und der zugehörige Anruf werden unwiderruflich gelöscht.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-stone-100 text-stone-700 text-sm font-bold hover:bg-stone-200 transition disabled:opacity-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Score summary cards */}
       {leads.length > 0 && (
         <div className="grid grid-cols-3 gap-4">
@@ -264,8 +319,14 @@ export default function LeadsPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {filteredLeads.map((lead, idx) => (
-            <Card key={lead.callId} className="p-4 md:p-5 hover:border-orange-200/60 transition-all hover:shadow-[0_8px_30px_-12px_rgba(234,88,12,0.15)] group">
+          {filteredLeads.map((lead, idx) => {
+            const isExpanded = expandedId === lead.callId;
+            return (
+            <Card key={lead.callId} className="p-0 overflow-hidden hover:border-orange-200/60 transition-all hover:shadow-[0_8px_30px_-12px_rgba(234,88,12,0.15)] group">
+              <div
+                className="p-4 md:p-5 cursor-pointer"
+                onClick={() => setExpandedId(isExpanded ? null : lead.callId)}
+              >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-8">
                 {/* Avatar & Info */}
                 <div className="flex items-center gap-4 min-w-[280px]">
@@ -276,24 +337,30 @@ export default function LeadsPage() {
                     <h3 className="font-bold text-stone-800 text-lg group-hover:text-orange-600 transition-colors">
                       Lead #{lead.callId}
                     </h3>
-                    <div className="flex items-center gap-3 text-stone-500 text-sm font-medium mt-0.5">
+                    <div className="flex flex-wrap items-center gap-3 text-stone-500 text-sm font-medium mt-0.5">
                       {lead.branche !== "Unbekannt" && (
                         <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> {lead.branche}</span>
+                      )}
+                      {lead.unternehmensgroesse !== "-" && (
+                        <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> {lead.unternehmensgroesse}</span>
                       )}
                       <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> {formatDuration(lead.duration)}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Summary (truncated) */}
-                {lead.summary && (
-                  <div className="hidden lg:block flex-1 text-sm text-stone-500 font-medium truncate max-w-[300px]">
-                    {lead.summary}
-                  </div>
-                )}
-
                 {/* Status & Score */}
-                <div className="flex flex-wrap items-center gap-3 min-w-[240px]">
+                <div className="flex flex-wrap items-center gap-2">
+                  {lead.demoBooked && (
+                    <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2.5 py-1 rounded-xl text-xs font-bold">
+                      <Calendar className="w-3 h-3" /> Demo
+                    </div>
+                  )}
+                  {lead.emailCollected && (
+                    <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200/60 px-2.5 py-1 rounded-xl text-xs font-bold">
+                      <Mail className="w-3 h-3" /> E-Mail
+                    </div>
+                  )}
                   <Badge variant={lead.score === "A" ? "success" : lead.score === "B" ? "warning" : "destructive"} className="px-3 py-1 text-sm shadow-sm">
                     Score {lead.score}
                   </Badge>
@@ -316,14 +383,74 @@ export default function LeadsPage() {
                   </span>
                 </div>
 
-                {/* Time */}
-                <div className="flex items-center gap-1.5 text-sm font-medium text-stone-400 bg-stone-50 px-3 py-1.5 rounded-xl border border-stone-100 shrink-0">
-                  <Clock className="w-3.5 h-3.5" />
-                  {formatRelativeTime(lead.lastContact)}
+                {/* Time + expand */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 text-sm font-medium text-stone-400 bg-stone-50 px-3 py-1.5 rounded-xl border border-stone-100">
+                    <Clock className="w-3.5 h-3.5" />
+                    {formatRelativeTime(lead.lastContact)}
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(lead); }}
+                    className="w-8 h-8 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center text-stone-400 hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-colors"
+                    title="Lead löschen"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="w-8 h-8 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center text-stone-400 group-hover:text-orange-500 transition-colors">
+                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </div>
                 </div>
               </div>
+              </div>
+
+              {/* Expanded detail section */}
+              {isExpanded && (
+                <div className="border-t border-stone-100 bg-[#faf8f5] p-5 md:p-6 flex flex-col gap-4">
+                  {/* Summary */}
+                  {lead.summary && (
+                    <div className="relative overflow-hidden group/summary">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-orange-400 to-orange-600 rounded-full" />
+                      <div className="pl-4">
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-orange-600/80 mb-1.5">
+                          Gesprächszusammenfassung
+                        </h4>
+                        <p className="text-sm text-stone-700 leading-relaxed font-medium">{lead.summary}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* BANT qualification grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {lead.branche !== "Unbekannt" && (
+                      <div className="bg-white border border-stone-200/50 rounded-xl p-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Branche</span>
+                        <p className="text-sm font-semibold text-stone-800 mt-0.5">{lead.branche}</p>
+                      </div>
+                    )}
+                    {lead.unternehmensgroesse !== "-" && (
+                      <div className="bg-white border border-stone-200/50 rounded-xl p-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Größe</span>
+                        <p className="text-sm font-semibold text-stone-800 mt-0.5">{lead.unternehmensgroesse}</p>
+                      </div>
+                    )}
+                    {lead.aktuelle_loesung !== "-" && (
+                      <div className="bg-white border border-stone-200/50 rounded-xl p-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Akt. Lösung</span>
+                        <p className="text-sm font-semibold text-stone-800 mt-0.5">{lead.aktuelle_loesung}</p>
+                      </div>
+                    )}
+                    {lead.budget_zeitrahmen !== "-" && (
+                      <div className="bg-white border border-stone-200/50 rounded-xl p-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Budget/Zeitrahmen</span>
+                        <p className="text-sm font-semibold text-stone-800 mt-0.5">{lead.budget_zeitrahmen}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

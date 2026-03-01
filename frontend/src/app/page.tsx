@@ -1,6 +1,10 @@
+
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { VoiceWidget } from "@/components/voice-widget";
-import { Building2, Phone as PhoneIcon, TrendingUp, Shield } from "lucide-react";
+import { Building2, Phone as PhoneIcon, TrendingUp, Shield, AlertTriangle } from "lucide-react";
 
 const numbers = [
   { value: "850+", label: "Unternehmen", icon: Building2 },
@@ -10,8 +14,50 @@ const numbers = [
 ];
 
 export default function Home() {
+  const [accepted, setAccepted] = useState(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("kreativstrom_disclaimer") === "1") {
+      setAccepted(true);
+    }
+  }, []);
+
+  const handleAccept = () => {
+    sessionStorage.setItem("kreativstrom_disclaimer", "1");
+    setAccepted(true);
+  };
+
   return (
     <div className="relative min-h-screen bg-white text-stone-900 font-sans overflow-x-hidden flex flex-col">
+
+      {/* Disclaimer Modal */}
+      {!accepted && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-3xl shadow-2xl border border-stone-200 p-8 max-w-md w-full animate-[fadeIn_0.2s_ease-out]">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-11 h-11 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5.5 h-5.5 text-amber-600" />
+              </div>
+              <h2 className="text-xl font-extrabold text-stone-900 tracking-tight">Hinweis</h2>
+            </div>
+            <div className="space-y-3 mb-7">
+              <p className="text-sm text-stone-600 leading-relaxed font-medium">
+                Dies ist ein <span className="font-bold text-stone-800">Testprodukt</span> im Rahmen eines Wettbewerbs. Es werden keine realen Dienstleistungen angeboten.
+              </p>
+              <p className="text-sm text-stone-600 leading-relaxed font-medium">
+                Ihre Gespräche mit der KI werden <span className="font-bold text-stone-800">transkribiert und gespeichert</span>, um die Qualität des Agents zu analysieren.
+              </p>
+            </div>
+            <button
+              onClick={handleAccept}
+              className="w-full py-3 rounded-2xl bg-stone-900 text-white font-bold text-sm hover:bg-stone-800 transition-all shadow-md active:scale-[0.98]"
+            >
+              Verstanden
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Background Vector Line */}
       <div className="absolute top-0 right-0 w-full h-[900px] pointer-events-none z-0 flex justify-end overflow-hidden">

@@ -401,6 +401,12 @@ async def entrypoint(ctx: JobContext):
     idle_timeout = int(ai_settings.get("idleTimeout", 60))
     max_session_duration = int(ai_settings.get("maxSessionDuration", 600))
     qualification_criteria = ai_settings.get("qualificationCriteria", DEFAULT_SETTINGS["qualificationCriteria"])
+    # Company context — new structured fields or legacy systemPrompt fallback
+    custom_company_desc = ai_settings.get("companyDescription", "")
+    custom_products = ai_settings.get("products", "")
+    custom_pricing = ai_settings.get("pricing", "")
+    custom_case_study = ai_settings.get("caseStudy", "")
+    custom_contact = ai_settings.get("contactInfo", "")
     custom_system_prompt = ai_settings.get("systemPrompt", "")
 
     logger.info(f"Agent settings: name={bot_name}, idle={idle_timeout}s, max={max_session_duration}s, criteria={len(qualification_criteria)}")
@@ -475,7 +481,22 @@ async def entrypoint(ctx: JobContext):
         "Case Study: Die Agentur Nordlicht Media hat mit Kreativstrom ihre Projektlaufzeiten "
         "um fünfundvierzig Prozent verkürzt und spart zwölf Stunden pro Woche an Koordinationsaufwand."
     )
-    company_context = custom_system_prompt if custom_system_prompt else default_company_context
+    # Use structured fields if available, fall back to legacy systemPrompt, then default
+    if custom_company_desc:
+        parts = [f"ÜBER KREATIVSTROM:\n{custom_company_desc}"]
+        if custom_products:
+            parts.append(f"KERNFEATURES:\n{custom_products}")
+        if custom_pricing:
+            parts.append(f"PREISE:\n{custom_pricing}")
+        if custom_case_study:
+            parts.append(f"CASE STUDY:\n{custom_case_study}")
+        if custom_contact:
+            parts.append(f"KONTAKT: {custom_contact}")
+        company_context = "\n\n".join(parts)
+    elif custom_system_prompt:
+        company_context = custom_system_prompt
+    else:
+        company_context = default_company_context
 
     agent = Agent(
         instructions=(
@@ -715,7 +736,7 @@ async def entrypoint(ctx: JobContext):
         elif hasattr(m, "duration"):
             logger.info(f"[LATENCY] {label}: duration={m.duration:.3f}s")
 
-    def compute_lead_score(lead_data):
+    def compute_lead_score(lead_data, demo_booked=False):
         """Deterministic A/B/C scoring from extracted qualification data."""
         points = 0
         branche = lead_data.get("branche", "unbekannt")
@@ -737,6 +758,9 @@ async def entrypoint(ctx: JobContext):
             points += 2
         elif interest == "medium":
             points += 1
+        # Demo booked = strong buying signal
+        if demo_booked:
+            points += 3
         if points >= 7:
             return "A"
         elif points >= 4:
@@ -750,13 +774,18 @@ async def entrypoint(ctx: JobContext):
         transcript_text = "\n".join(_user_transcripts[-20:])
         prompt = (
             "Analysiere dieses Gesprächstranskript eines potenziellen B2B-Kunden für Kreativstrom "
-            "(Workflow-Automatisierung SaaS) und extrahiere folgende Informationen als JSON. "
+            "(KI-Projektmanagement SaaS) und extrahiere folgende Informationen als JSON. "
             "Antworte NUR mit einem JSON-Objekt, kein anderer Text:\n"
-            '{"branche": "IT|Industrie|Finanzen|Gesundheit|Recht|Beratung|Sonstiges|unbekannt", '
+            '{"branche": "IT|Industrie|Handwerk|Finanzen|Gesundheit|Recht|Beratung|Agentur|Sonstiges|unbekannt", '
             '"unternehmensgroesse": "1-10|11-50|51-200|200+|unbekannt", '
             '"aktuelle_loesung": "keine|manuell-Excel|andere-Software|unbekannt", '
             '"budget_zeitrahmen": "sofort|3_monate|6_monate|nur_info|unbekannt", '
             '"interest_level": "high|medium|low"}\n\n'
+            "Wichtig für interest_level:\n"
+            "- high = Anrufer hat konkretes Interesse, stellt gezielte Fragen, will Demo oder Termin\n"
+            "- medium = Anrufer informiert sich aktiv, hat Fragen, aber ist noch unsicher\n"
+            "- low = kein echtes Interesse, blockt ab, will nur schnell auflegen\n"
+            "Ein Anrufer der aktiv anruft und Fragen stellt ist MINDESTENS medium.\n\n"
             f"Transcript:\n{transcript_text}"
         )
         try:
@@ -766,14 +795,21 @@ async def entrypoint(ctx: JobContext):
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={google_api_key}"
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.1, "maxOutputTokens": 256},
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 512,
+                    "thinkingConfig": {"thinkingBudget": 0},
+                },
             }
             async with aiohttp.ClientSession() as http:
                 async with http.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                     if resp.status != 200:
+                        logger.warning(f"Gemini extraction API returned {resp.status}")
                         return {}
                     data = await resp.json()
-                    text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                    parts = data["candidates"][0]["content"]["parts"]
+                    text_parts = [p["text"] for p in parts if "text" in p and not p.get("thought")]
+                    text = " ".join(text_parts).strip()
                     if text.startswith("```"):
                         text = text.split("```")[1]
                         if text.startswith("json"):
@@ -814,14 +850,22 @@ async def entrypoint(ctx: JobContext):
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={google_api_key}"
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.3, "maxOutputTokens": 300},
+                "generationConfig": {
+                    "temperature": 0.3,
+                    "maxOutputTokens": 1024,
+                    "thinkingConfig": {"thinkingBudget": 0},
+                },
             }
             async with aiohttp.ClientSession() as http:
                 async with http.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=15)) as resp:
                     if resp.status != 200:
+                        logger.warning(f"Gemini summary API returned {resp.status}: {await resp.text()}")
                         return ""
                     data = await resp.json()
-                    return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                    # Extract text from response, skip thinking parts
+                    parts = data["candidates"][0]["content"]["parts"]
+                    text_parts = [p["text"] for p in parts if "text" in p and not p.get("thought")]
+                    return " ".join(text_parts).strip()
         except Exception as e:
             logger.warning(f"Call summary generation failed: {e}")
             return ""
@@ -872,7 +916,8 @@ async def entrypoint(ctx: JobContext):
         except Exception as e:
             logger.warning(f"Lead qualification failed: {e}")
 
-        lead_score = compute_lead_score(lead_data) if lead_data else "C"
+        demo_booked = _session_analytics.get("demo_booked", False)
+        lead_score = compute_lead_score(lead_data, demo_booked=demo_booked) if lead_data else ("B" if demo_booked else "C")
 
         # Generate AI-powered call summary
         call_summary = ""
